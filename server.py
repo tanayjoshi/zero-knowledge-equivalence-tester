@@ -1,7 +1,4 @@
-'''
-    Simple socket server using threads
-'''
- 
+
 import socket
 import sys
 from thread import *
@@ -19,6 +16,7 @@ from random import randint
 #Server calculates non_b * non_a * hash(Sa)
 #Server calculates non_a * non_b * hash(Sb)
 #Server checks if they are equal
+#Server sends relevant answer to client in the clear. However, it can send the Clients the encrypted message for added protection.
 
 HOST = ''   # Symbolic name meaning all available interfaces
 PORT = 8888 # Arbitrary non-privileged port
@@ -35,8 +33,6 @@ pub = key.publickey()
 f = open('mykey.pem','w')
 f.write(pub.exportKey('PEM'))
 f.close()
-
-
 
 #create two nonces to send to the two clients
 non_a = (randint(0,9))
@@ -65,6 +61,7 @@ while 1:
     #receive data from client A
     d = conn.recv(1024)
     data = ((d))
+    #get client's public key (for later)
     f = open('cl1key.pem','r')
     cl1key = RSA.importKey(f.read())
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
@@ -76,27 +73,25 @@ while 1:
     conn2.send(str(non_b))
     d2 = conn2.recv(1024)
     data2 = ((d2))
-    f = open('cl1key.pem','r')
-    cl1key = RSA.importKey(f.read())
+    #f = open('cl2key.pem','r')
+    #cl2key = RSA.importKey(f.read())
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
     c = key.decrypt(data2)
 
     #multiply decrypted values with opposite nonces
     a1= b*non_b
     a2= c*non_a
-    #print a1
-    #print a2
 
     #if the final values are equal, output same else not same
     if (a1==a2):
-        print "same"
-        conn.send((cl1key.encrypt("same",1))[0])
-        conn2.send("same")  
+        print "EQUAL"
+        conn.send("EQUAL")
+        conn2.send("EQUAL")
     else:
-        print "not same"
-        conn.send((cl1key.encrypt("not same",1))[0])
-        conn2.send("not same")
-    print "end"
+        print "NOT EQUAL"
+        conn.send("NOT EQUAL")
+        conn2.send("NOT EQUAL")
+    print "END"
     
 s.close()
 
